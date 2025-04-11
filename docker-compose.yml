@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    container_name: noocracy-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    # Nous utilisons des volumes pour le développement (hot reload)
+    # Pour la production, il est préférable de ne pas utiliser de volumes
+    # et de s'appuyer sur les copies dans le Dockerfile
+    volumes:
+      - /app/node_modules  # Volume anonyme pour les node_modules
+      - /app/.next         # Volume anonyme pour le dossier .next
+
+  # Vous pouvez ajouter d'autres services ici selon vos besoins
+  # Par exemple:
+  
+  # db:
+  #   image: postgres:14
+  #   container_name: noocracy-db
+  #   restart: always
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #     - POSTGRES_DB=noocracy
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: ./api/Dockerfile
+  #   container_name: noocracy-api
+  #   restart: always
+  #   ports:
+  #     - "4000:4000"
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     - NODE_ENV=production
+  #     - DATABASE_URL=postgres://postgres:postgres@db:5432/noocracy
+
+# Volumes partagés
+# volumes:
+#   postgres_data:
