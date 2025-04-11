@@ -87,15 +87,31 @@ async def verify_identity(image_id: UploadFile = File(...), image_selfie: Upload
         for bbox, text, conf in ocr_result:
             print(f"  [{conf:.2f}] {text}")
 
-        # Récupération des 2 dernières lignes détectées
-        if len(ocr_result) >= 2:
-            last_two_lines = [text for _, text, _ in ocr_result[-2:]]
-            mrz_text = "\n".join(last_two_lines)
-            print("\n✅ Zone MRZ détectée (2 dernières lignes OCR) :")
+        # Détection de la zone MRZ (Machine Readable Zone)
+        mrz_lines = []
+        # Recherche des lignes qui correspondent au format MRZ
+        for _, text, conf in ocr_result:
+            # Filtrer les lignes qui ressemblent à une MRZ
+            # Les lignes MRZ commencent souvent par des caractères spécifiques et contiennent principalement
+            # des chiffres et des lettres majuscules
+            cleaned_text = text.strip().upper()
+            if len(cleaned_text) > 20 and ('<' in cleaned_text or any(c.isdigit() for c in cleaned_text)):
+                if conf > 0.2:  # Seuil de confiance assez bas pour ne pas manquer de lignes
+                    mrz_lines.append(cleaned_text)
+        
+        # Si aucune ligne MRZ n'est détectée, essayer avec les 3 dernières lignes
+        if not mrz_lines and len(ocr_result) >= 3:
+            mrz_lines = [text for _, text, _ in ocr_result[-3:]]
+        
+        mrz_text = "\n".join(mrz_lines)
+        
+        if mrz_lines:
+            print("\n✅ Zone MRZ détectée :")
             print(mrz_text)
+            print(f"Nombre de lignes MRZ : {len(mrz_lines)}")
         else:
             mrz_text = ""
-            print("❌ Pas assez de lignes OCR pour extraire la MRZ.")
+            print("❌ Pas de zone MRZ détectée.")
 
         return {
             "match": bool(match),

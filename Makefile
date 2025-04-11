@@ -1,5 +1,5 @@
 # Makefile pour Noocracy - Service de vérification d'identité
-.PHONY: help build run stop logs clean fclean test all
+.PHONY: help build run stop logs clean fclean test all dev
 
 # Variables
 IMAGE_NAME = noocracy-registration
@@ -12,11 +12,13 @@ help:
 	@echo "  make build     - Construit l'image Docker"
 	@echo "  make run       - Démarre le service de vérification"
 	@echo "  make stop      - Arrête le service"
+	@echo "  make restart   - Redémarre les conteneurs"
 	@echo "  make logs      - Affiche les logs du service"
 	@echo "  make clean     - Nettoie les ressources non utilisées"
 	@echo "  make fclean    - Arrête le service et nettoie tout"
 	@echo "  make test      - Exécute un test simple de l'API"
 	@echo "  make all       - Construit l'image et démarre le service"
+	@echo "  make dev       - Lance le service en mode développement (hot-reload)"
 
 # Construit l'image Docker
 build:
@@ -29,16 +31,35 @@ run:
 	docker run -d --name $(CONTAINER_NAME) -p $(PORT):$(PORT) $(IMAGE_NAME)
 	@echo "Service disponible sur http://localhost:$(PORT)"
 
+# Lance le service en mode développement (avec volumes montés pour hot-reload)
+dev:
+	@echo "Démarrage du service en mode développement..."
+	docker run -d --name $(CONTAINER_NAME)_dev \
+		-p $(PORT):$(PORT) \
+		-v $(PWD)/registration.py:/app/registration.py \
+		-v $(PWD)/pics:/app/pics \
+		$(IMAGE_NAME) uvicorn registration:app --host 0.0.0.0 --port $(PORT) --reload
+	@echo "Service de développement disponible sur http://localhost:$(PORT)"
+	@echo "Hot-reload activé : les modifications de code seront appliquées automatiquement"
+
 # Arrête le service
 stop:
 	@echo "Arrêt du service..."
 	docker stop $(CONTAINER_NAME) || true
 	docker rm $(CONTAINER_NAME) || true
+	docker stop $(CONTAINER_NAME)_dev || true
+	docker rm $(CONTAINER_NAME)_dev || true
+
+# Redémarre les conteneurs
+restart:
+	@echo "Redémarrage des conteneurs..."
+	docker restart $(CONTAINER_NAME) || true
+	docker restart $(CONTAINER_NAME)_dev || true
 
 # Affiche les logs
 logs:
 	@echo "Affichage des logs..."
-	docker logs -f $(CONTAINER_NAME)
+	docker logs -f $(CONTAINER_NAME) || docker logs -f $(CONTAINER_NAME)_dev
 
 # Nettoie les ressources non utilisées
 clean:
@@ -47,7 +68,7 @@ clean:
 
 # Arrête le service et nettoie tout
 fclean: stop
-	@echo "Suppression de l'image Docker..."
+	@echo "Suppression des images Docker..."
 	docker rmi $(IMAGE_NAME) || true
 	@echo "Nettoyage des ressources Docker non utilisées..."
 	docker system prune -f
