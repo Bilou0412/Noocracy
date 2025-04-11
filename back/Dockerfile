@@ -24,7 +24,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copie du code source
 COPY registration.py ./
-COPY pics/ ./pics/
 
 # Exposer le port de l'API
 EXPOSE 8000

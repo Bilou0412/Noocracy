@@ -17,6 +17,21 @@ services:
     volumes:
       - /app/node_modules  # Volume anonyme pour les node_modules
       - /app/.next         # Volume anonyme pour le dossier .next
+    depends_on:
+      - backend
+
+  # Service backend pour la vérification d'identité
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: noocracy-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./back:/app  # Pour le développement (hot reload)
+      - ./back/pics:/app/pics  # Partage des images de test (si nécessaire)
 
   # Vous pouvez ajouter d'autres services ici selon vos besoins
   # Par exemple:
