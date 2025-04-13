@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   frontend:
@@ -17,8 +16,8 @@ services:
     volumes:
       - /app/node_modules  # Volume anonyme pour les node_modules
       - /app/.next         # Volume anonyme pour le dossier .next
-    depends_on:
-      - backend
+    #depends_on:
+     # - backend
 
   # Service backend pour la vérification d'identité
   backend:
